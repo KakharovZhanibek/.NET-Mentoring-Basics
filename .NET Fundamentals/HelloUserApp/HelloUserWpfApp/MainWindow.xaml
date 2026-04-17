@@ -8,8 +8,7 @@
         Title="User Greeter" Height="250" Width="400">
     <StackPanel Margin="12" HorizontalAlignment="Center" VerticalAlignment="Center">
         <Label HorizontalAlignment="Center" Content="Enter your username" />
-        <TextBox x:Name="UsernameTextBox" Width="200" BorderBrush="Black"/>
-        <Button Content="Say hello" Click="OnSayHello" Margin="50,8" Width="100" Height="30" />
-        <!--<TextBlock x:Name="Greeting" Margin="0,8,0,0" HorizontalAlignment="Center" FontWeight="Bold"/>-->
+        <TextBox x:Name="UsernameTextBox" TextChanged="UsernameTextBox_TextChanged" Width="200" BorderBrush="Black"/>
+        <Button x:Name="SayHelloButton" Content="Say hello" Click="SayHelloButton_Click" IsEnabled="False" Margin="50,8" Width="100" Height="30" />
     </StackPanel>
 </Window>

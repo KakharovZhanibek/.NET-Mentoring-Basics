@@ -1,20 +1,29 @@
 ﻿using System;
-using System.Diagnostics;
-using System.IO;
-using System.IO.Pipes;
-using System.Text;
-using HelloUserConsoleApp.Services;
-using HelloUserLibrary;
+using System.Threading.Tasks;
+using HelloUserLibrary.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace HelloUserConsoleApp
 {
-    internal class Program
+    public static class Program
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
-            var userName = args.Length > 0 ? string.Join(" ", args) : string.Empty;
-            var greeterService = new GreeterService();
-            greeterService.Greet(userName);
+            var servicesProvider = new ServiceCollection()
+                .AddTransient<INameProvider, ConsoleNameProvider>()
+                .AddTransient<IGreeterService, ConsoleUserGreeterService>()
+                .AddTransient<UsernameFromCommandLineRetriever>()
+                .BuildServiceProvider();
+            
+            Console.Clear();
+            var usernameRetriever = servicesProvider.GetRequiredService<UsernameFromCommandLineRetriever>();
+            string username = await usernameRetriever.GetUsernameFromCommandLineArgs(args);
+
+            var greeterService = servicesProvider.GetRequiredService<IGreeterService>();
+            greeterService.Greet(username);
+
+            Console.WriteLine("Press any key...");
+            Console.ReadKey();
         }
     }
 }

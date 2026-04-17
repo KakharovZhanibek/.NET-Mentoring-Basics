@@ -15,13 +15,14 @@ using System.Windows.Shapes;
 namespace HelloUserWpfApp
 {
     /// <summary>
-    /// Interaction logic for UserGreetings.xaml
+    /// Interaction logic for GreetingWindow.xaml
     /// </summary>
-    public partial class UserGreetings : Window
+    public partial class GreetingWindow : Window
     {
-        public UserGreetings()
+        public GreetingWindow(string greeting)
         {
             InitializeComponent();
+            GreetingText.Text = greeting;
         }
     }
 }
