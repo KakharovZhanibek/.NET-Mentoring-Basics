@@ -1,13 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.36401.2 d17.14
+VisualStudioVersion = 17.14.36401.2
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HelloUserLibrary", "HelloUserClassLibrary\HelloUserLibrary.csproj", "{6BBF74EE-CA8D-47F1-BD69-12C216C80B87}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HelloUserConsoleApp", "HelloUserConsoleApp\HelloUserConsoleApp.csproj", "{867E5029-150F-46F5-9DDA-14FF7C929464}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HelloUserWpfApp", "HelloUserWpfApp\HelloUserWpfApp.csproj", "{05248CCF-9F36-4B6D-BF6D-45A7A7D126A8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HelloUserMAUIApp", "HelloUserMAUIApp\HelloUserMAUIApp.csproj", "{8622874C-30AF-4D84-8616-CDAA4201C6F1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,6 +29,10 @@ Global
 		{05248CCF-9F36-4B6D-BF6D-45A7A7D126A8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{05248CCF-9F36-4B6D-BF6D-45A7A7D126A8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{05248CCF-9F36-4B6D-BF6D-45A7A7D126A8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8622874C-30AF-4D84-8616-CDAA4201C6F1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8622874C-30AF-4D84-8616-CDAA4201C6F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8622874C-30AF-4D84-8616-CDAA4201C6F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8622874C-30AF-4D84-8616-CDAA4201C6F1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
