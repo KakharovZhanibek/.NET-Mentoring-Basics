@@ -1,0 +1,14 @@
+﻿<Window x:Class="HelloUserWpfApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:HelloUserWpfApp"
+        mc:Ignorable="d"
+        Title="User Greeter" Height="250" Width="400">
+    <StackPanel Margin="12" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <Label HorizontalAlignment="Center" Content="Enter your username" />
+        <TextBox x:Name="UsernameTextBox" TextChanged="UsernameTextBox_TextChanged" Width="200" BorderBrush="Black"/>
+        <Button x:Name="SayHelloButton" Content="Say hello" Click="SayHelloButton_Click" IsEnabled="False" Margin="50,8" Width="100" Height="30" />
+    </StackPanel>
+</Window>
