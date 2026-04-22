@@ -10,7 +10,7 @@ namespace HelloUserConsoleApp
         static async Task Main(string[] args)
         {
             var servicesProvider = new ServiceCollection()
-                .AddTransient<INameProvider, ConsoleNameProvider>()
+                .AddSingleton<INameProvider, ConsoleNameProvider>()
                 .AddTransient<IGreeterService, ConsoleUserGreeterService>()
                 .AddTransient<UsernameFromCommandLineRetriever>()
                 .BuildServiceProvider();
