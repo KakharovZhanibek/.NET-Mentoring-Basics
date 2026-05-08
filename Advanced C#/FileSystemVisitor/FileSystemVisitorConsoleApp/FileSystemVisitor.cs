@@ -1,23 +1,7 @@
+using FileSystemVisitorConsoleApp.Events;
 using FileSystemVisitorConsoleApp.Interfaces;
 
 namespace FileSystemVisitorConsoleApp;
-
-/// <summary>
-/// Event arguments for file system item events.
-/// </summary>
-public class ItemEventArgs : EventArgs
-{
-    public string ItemPath { get; }
-    public bool StopSearch { get; set; }
-    public bool ExcludeItem { get; set; }
-
-    public ItemEventArgs(string itemPath)
-    {
-        ItemPath = itemPath;
-        StopSearch = false;
-        ExcludeItem = false;
-    }
-}
 
 /// <summary>
 /// A class that allows traversing a file system tree from a pre-defined folder.
@@ -31,13 +15,10 @@ public class FileSystemVisitor : IFileSystemVisitor
     private readonly IFileSystemFilter? _filter;
     private bool _stopSearchRequested;
 
-    // Events
-    public event EventHandler? Start;
-    public event EventHandler? Finish;
-    public event EventHandler<ItemEventArgs>? FileFound;
-    public event EventHandler<ItemEventArgs>? DirectoryFound;
-    public event EventHandler<ItemEventArgs>? FilteredFileFound;
-    public event EventHandler<ItemEventArgs>? FilteredDirectoryFound;
+    /// <summary>
+    /// Event raised during file system traversal with information about what happened.
+    /// </summary>
+    public event EventHandler<FileSystemVisitorEventArgs>? ItemProcessed;
 
     /// <summary>
     /// Initializes a new instance of FileSystemVisitor without filtering.
@@ -143,8 +124,11 @@ public class FileSystemVisitor : IFileSystemVisitor
                     yield break;
 
                 // Raise DirectoryFound event (before filtering)
-                var dirFoundArgs = new ItemEventArgs(directory);
-                OnDirectoryFound(dirFoundArgs);
+                var dirFoundArgs = new FileSystemVisitorEventArgs(
+                    $"Directory found: {directory}", 
+                    FileSystemEventType.DirectoryFound, 
+                    directory);
+                OnItemProcessed(dirFoundArgs);
 
                 if (dirFoundArgs.StopSearch)
                 {
@@ -161,8 +145,11 @@ public class FileSystemVisitor : IFileSystemVisitor
                 if (passesFilter)
                 {
                     // Raise FilteredDirectoryFound event (after filtering)
-                    var filteredDirArgs = new ItemEventArgs(directory);
-                    OnFilteredDirectoryFound(filteredDirArgs);
+                    var filteredDirArgs = new FileSystemVisitorEventArgs(
+                        $"Filtered directory found: {directory}", 
+                        FileSystemEventType.FilteredDirectoryFound, 
+                        directory);
+                    OnItemProcessed(filteredDirArgs);
 
                     if (filteredDirArgs.StopSearch)
                     {
@@ -212,8 +199,11 @@ public class FileSystemVisitor : IFileSystemVisitor
                     yield break;
 
                 // Raise FileFound event (before filtering)
-                var fileFoundArgs = new ItemEventArgs(file);
-                OnFileFound(fileFoundArgs);
+                var fileFoundArgs = new FileSystemVisitorEventArgs(
+                    $"File found: {file}", 
+                    FileSystemEventType.FileFound, 
+                    file);
+                OnItemProcessed(fileFoundArgs);
 
                 if (fileFoundArgs.StopSearch)
                 {
@@ -230,8 +220,11 @@ public class FileSystemVisitor : IFileSystemVisitor
                 if (passesFilter)
                 {
                     // Raise FilteredFileFound event (after filtering)
-                    var filteredFileArgs = new ItemEventArgs(file);
-                    OnFilteredFileFound(filteredFileArgs);
+                    var filteredFileArgs = new FileSystemVisitorEventArgs(
+                        $"Filtered file found: {file}", 
+                        FileSystemEventType.FilteredFileFound, 
+                        file);
+                    OnItemProcessed(filteredFileArgs);
 
                     if (filteredFileArgs.StopSearch)
                     {
@@ -248,7 +241,7 @@ public class FileSystemVisitor : IFileSystemVisitor
         }
     }
 
-    /// <summary>f
+    /// <summary>
     /// Applies the appropriate filter (path-based, info-based, or IFileSystemFilter) to the item.
     /// </summary>
     /// <param name="itemPath">The path of the item to filter.</param>
@@ -299,33 +292,36 @@ public class FileSystemVisitor : IFileSystemVisitor
     }
 
     // Event raising methods
+    
+    /// <summary>
+    /// Raises the Start event.
+    /// </summary>
     protected virtual void OnStart()
     {
-        Start?.Invoke(this, EventArgs.Empty);
+        var args = new FileSystemVisitorEventArgs("Search started", FileSystemEventType.Start);
+        OnItemProcessed(args);
     }
 
+    /// <summary>
+    /// Raises the Finish event.
+    /// </summary>
     protected virtual void OnFinish()
     {
-        Finish?.Invoke(this, EventArgs.Empty);
+        var args = new FileSystemVisitorEventArgs("Search finished", FileSystemEventType.Finish);
+        OnItemProcessed(args);
     }
 
-    protected virtual void OnFileFound(ItemEventArgs e)
+    /// <summary>
+    /// Raises the ItemProcessed event.
+    /// </summary>
+    /// <param name="e">The event arguments.</param>
+    protected virtual void OnItemProcessed(FileSystemVisitorEventArgs e)
     {
-        FileFound?.Invoke(this, e);
-    }
-
-    protected virtual void OnDirectoryFound(ItemEventArgs e)
-    {
-        DirectoryFound?.Invoke(this, e);
-    }
-
-    protected virtual void OnFilteredFileFound(ItemEventArgs e)
-    {
-        FilteredFileFound?.Invoke(this, e);
-    }
-
-    protected virtual void OnFilteredDirectoryFound(ItemEventArgs e)
-    {
-        FilteredDirectoryFound?.Invoke(this, e);
+        ItemProcessed?.Invoke(this, e);
+        
+        if (e.StopSearch)
+        {
+            _stopSearchRequested = true;
+        }
     }
 }

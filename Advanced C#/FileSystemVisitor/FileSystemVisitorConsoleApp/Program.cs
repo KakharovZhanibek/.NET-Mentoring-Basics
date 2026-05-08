@@ -1,13 +1,13 @@
 ﻿using FileSystemVisitorConsoleApp;
-using FileSystemVisitorConsoleApp.Factories;
+using FileSystemVisitorConsoleApp.Events;
+using FileSystemVisitorConsoleApp.Filters.Base;
 using FileSystemVisitorConsoleApp.Interfaces;
+using FileSystemVisitorConsoleApp.Metadata;
+using FileSystemVisitorConsoleApp.Services;
 
 Console.WriteLine("╔═══════════════════════════════════════════════════════════╗");
 Console.WriteLine("║       FileSystemVisitor - Interactive Demo               ║");
 Console.WriteLine("╚═══════════════════════════════════════════════════════════╝\n");
-
-// Initialize FilterFactory for creating delegate/lambda algorithms
-var filterFactory = new FilterFactory();
 
 // Get directory path from user
 string targetDirectory = GetDirectoryFromUser();
@@ -31,7 +31,7 @@ while (running)
             ShowAllItems(targetDirectory);
             break;
         case "2":
-            ApplyMultipleFilters(targetDirectory, filterFactory);
+            ApplyMultipleFilters(targetDirectory);
             break;
         case "3":
             targetDirectory = GetDirectoryFromUser();
@@ -103,11 +103,34 @@ static void ShowAllItems(string directory)
         
         int fileCount = 0;
         int dirCount = 0;
+        int filteredFileCount = 0;
+        int filteredDirCount = 0;
         
-        visitor.Start += (s, e) => Console.WriteLine("[Started search...]\n");
-        visitor.FileFound += (s, e) => fileCount++;
-        visitor.DirectoryFound += (s, e) => dirCount++;
-        visitor.Finish += (s, e) => Console.WriteLine("\n[Search completed]");
+        // Using the new single event with message
+        visitor.ItemProcessed += (s, e) =>
+        {
+            switch (e.EventType)
+            {
+                case FileSystemEventType.Start:
+                    Console.WriteLine($"[{e.Message}]\n");
+                    break;
+                case FileSystemEventType.Finish:
+                    Console.WriteLine($"\n[{e.Message}]");
+                    break;
+                case FileSystemEventType.FileFound:
+                    fileCount++;
+                    break;
+                case FileSystemEventType.DirectoryFound:
+                    dirCount++;
+                    break;
+                case FileSystemEventType.FilteredFileFound:
+                    filteredFileCount++;
+                    break;
+                case FileSystemEventType.FilteredDirectoryFound:
+                    filteredDirCount++;
+                    break;
+            }
+        };
         
         int displayCount = 0;
         foreach (var item in visitor.GetFileSystemItems())
@@ -117,7 +140,9 @@ static void ShowAllItems(string directory)
             displayCount++;
         }
         
-        Console.WriteLine($"\nTotal: {displayCount} items ({dirCount} directories, {fileCount} files)");
+        Console.WriteLine($"\nTotal found: {fileCount} files, {dirCount} directories");
+        Console.WriteLine($"Passed filter: {filteredFileCount} files, {filteredDirCount} directories");
+        Console.WriteLine($"Final results: {displayCount} items");
     }
     catch (Exception ex)
     {
@@ -126,9 +151,9 @@ static void ShowAllItems(string directory)
 }
 
 /// <summary>
-/// Applies multiple filters using delegate/lambda algorithms and event handlers.
+/// Applies multiple filters using a metadata-driven approach.
 /// </summary>
-static void ApplyMultipleFilters(string directory, FilterFactory filterFactory)
+static void ApplyMultipleFilters(string directory)
 {
     Console.WriteLine("═══ Apply Filters and Event Handlers ═══\n");
     
@@ -139,59 +164,53 @@ static void ApplyMultipleFilters(string directory, FilterFactory filterFactory)
     
     while (addingFilters)
     {
-        Console.WriteLine("\nAvailable options:");
-        Console.WriteLine("1. File extension filter");
-        Console.WriteLine("2. File size filter");
-        Console.WriteLine("3. Creation date filter");
-        Console.WriteLine("4. Modification date filter");
-        Console.WriteLine("5. Files only filter");
-        Console.WriteLine("6. Directories only filter");
-        Console.WriteLine("7. Abort condition (stop at specific name)");
-        Console.WriteLine("8. Exclude files by extension");
+        // Dynamically render filter options from registry
+        Console.WriteLine("\nAvailable filters:");
+        var availableFilters = FilterRegistry.AvailableFilters;
+        
+        for (int i = 0; i < availableFilters.Length; i++)
+        {
+            Console.WriteLine($"{i + 1}. {availableFilters[i].Name} - {availableFilters[i].Description}");
+        }
+        
+        Console.WriteLine($"{availableFilters.Length + 1}. Abort condition (stop at specific name)");
+        Console.WriteLine($"{availableFilters.Length + 2}. Exclude files by extension");
         Console.WriteLine("0. Done (apply filters and start search)");
         Console.Write("\nYour choice: ");
         
         string? choice = Console.ReadLine();
         Console.WriteLine();
         
-        switch (choice)
+        if (choice == "0")
         {
-            case "1":
-                var extFilter = GetExtensionFilter(filterFactory);
-                if (extFilter != null) filters.Add(extFilter);
-                break;
-            case "2":
-                var sizeFilter = GetSizeFilter(filterFactory);
-                if (sizeFilter != null) filters.Add(sizeFilter);
-                break;
-            case "3":
-                var createFilter = GetCreationDateFilter(filterFactory);
-                if (createFilter != null) filters.Add(createFilter);
-                break;
-            case "4":
-                var modifyFilter = GetModificationDateFilter(filterFactory);
-                if (modifyFilter != null) filters.Add(modifyFilter);
-                break;
-            case "5":
-                filters.Add(filterFactory.CreateFilesOnlyFilter());
-                Console.WriteLine("✓ Added: Files only");
-                break;
-            case "6":
-                filters.Add(filterFactory.CreateDirectoriesOnlyFilter());
-                Console.WriteLine("✓ Added: Directories only");
-                break;
-            case "7":
-                abortTargetName = GetAbortTargetName();
-                break;
-            case "8":
-                extensionsToExclude = GetExtensionsToExclude();
-                break;
-            case "0":
-                addingFilters = false;
-                break;
-            default:
-                Console.WriteLine("Invalid choice.");
-                break;
+            addingFilters = false;
+            continue;
+        }
+        
+        // Handle filter selection
+        if (int.TryParse(choice, out int filterIndex) && filterIndex >= 1 && filterIndex <= availableFilters.Length)
+        {
+            var selectedFilter = availableFilters[filterIndex - 1];
+            var filter = CreateFilterFromMetadata(selectedFilter);
+            
+            if (filter != null)
+            {
+                filters.Add(filter);
+                Console.WriteLine($"✓ Added: {filter.Description}");
+            }
+        }
+        // Handle special options (abort, exclude)
+        else if (filterIndex == availableFilters.Length + 1)
+        {
+            abortTargetName = GetAbortTargetName();
+        }
+        else if (filterIndex == availableFilters.Length + 2)
+        {
+            extensionsToExclude = GetExtensionsToExclude();
+        }
+        else
+        {
+            Console.WriteLine("Invalid choice.");
         }
         
         if (addingFilters && choice != "0")
@@ -210,7 +229,51 @@ static void ApplyMultipleFilters(string directory, FilterFactory filterFactory)
     }
     
     // Execute search with configured options
-    ExecuteSearch(directory, filterFactory, filters, abortTargetName, extensionsToExclude);
+    ExecuteSearch(directory, filters, abortTargetName, extensionsToExclude);
+}
+
+/// <summary>
+/// Creates a filter from metadata by collecting parameters from user.
+/// </summary>
+static IFileSystemFilter? CreateFilterFromMetadata(FilterMetadata metadata)
+{
+    try
+    {
+        Console.WriteLine($"\nConfiguring: {metadata.Name}");
+        
+        // If no parameters required, create immediately
+        if (metadata.Parameters.Length == 0)
+        {
+            return metadata.CreateFilter([]);
+        }
+        
+        // Collect parameter values
+        var parameterValues = new object?[metadata.Parameters.Length];
+        
+        for (int i = 0; i < metadata.Parameters.Length; i++)
+        {
+            var param = metadata.Parameters[i];
+            parameterValues[i] = ParameterInputService.GetParameterValue(
+                param.ParameterType,
+                param.Prompt,
+                param.IsRequired);
+        }
+        
+        // Validate that at least one parameter is provided for optional filters
+        if (metadata.Parameters.All(p => !p.IsRequired) && parameterValues.All(v => v == null))
+        {
+            Console.WriteLine("At least one parameter must be provided.");
+            return null;
+        }
+        
+        // Create the filter
+        return metadata.CreateFilter(parameterValues);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error creating filter: {ex.Message}");
+        return null;
+    }
 }
 
 /// <summary>
@@ -262,7 +325,6 @@ static HashSet<string>? GetExtensionsToExclude()
 /// </summary>
 static void ExecuteSearch(
     string directory, 
-    FilterFactory filterFactory, 
     List<IFileSystemFilter> filters, 
     string? abortTargetName, 
     HashSet<string>? extensionsToExclude)
@@ -278,7 +340,7 @@ static void ExecuteSearch(
     
     if (filters.Count > 0)
     {
-        var combinedFilter = filterFactory.CreateAndFilter(filters.ToArray());
+        var combinedFilter = new AndFilter(filters);
         Console.WriteLine($"Filters: {combinedFilter.Description}");
     }
     if (abortTargetName != null)
@@ -297,9 +359,8 @@ static void ExecuteSearch(
         FileSystemVisitor visitor;
         if (filters.Count > 0)
         {
-            var combinedFilter = filterFactory.CreateAndFilter(filters.ToArray());
-            Func<FileSystemInfo, bool> filterAlgorithm = combinedFilter.IsMatch;
-            visitor = new FileSystemVisitor(directory, filterAlgorithm);
+            var combinedFilter = new AndFilter(filters);
+            visitor = new FileSystemVisitor(directory, combinedFilter.IsMatch);
         }
         else
         {
@@ -312,62 +373,79 @@ static void ExecuteSearch(
         int excludedCount = 0;
         bool foundTarget = false;
         long totalSize = 0;
+        int filteredFileCount = 0;
+        int filteredDirCount = 0;
         
-        visitor.Start += (s, e) => Console.WriteLine("[Started search...]\n");
-        
-        // Event handler for abort condition
-        if (abortTargetName != null)
+        // Using the new single event for all operations
+        visitor.ItemProcessed += (sender, args) =>
         {
-            visitor.FileFound += (sender, args) =>
+            switch (args.EventType)
             {
-                string fileName = Path.GetFileName(args.ItemPath);
-                if (fileName.Equals(abortTargetName, StringComparison.OrdinalIgnoreCase))
-                {
-                    args.StopSearch = true;
-                    foundTarget = true;
-                    Console.WriteLine($"⛔ FOUND TARGET FILE: {args.ItemPath}");
-                    Console.WriteLine("   Aborting search...\n");
-                }
-            };
-            
-            visitor.DirectoryFound += (sender, args) =>
-            {
-                string dirName = Path.GetFileName(args.ItemPath);
-                if (dirName.Equals(abortTargetName, StringComparison.OrdinalIgnoreCase))
-                {
-                    args.StopSearch = true;
-                    foundTarget = true;
-                    Console.WriteLine($"⛔ FOUND TARGET DIRECTORY: {args.ItemPath}");
-                    Console.WriteLine("   Aborting search...\n");
-                }
-            };
-        }
-        
-        // Event handler for exclusions
-        if (extensionsToExclude != null)
-        {
-            visitor.FileFound += (sender, args) =>
-            {
-                string extension = Path.GetExtension(args.ItemPath).ToLowerInvariant();
-                if (extensionsToExclude.Contains(extension))
-                {
-                    args.ExcludeItem = true;
-                    excludedCount++;
-                    Console.WriteLine($"❌ EXCLUDED: {Path.GetFileName(args.ItemPath)} (extension: {extension})");
-                }
-            };
-        }
-        
-        // Count all items
-        visitor.FileFound += (s, e) => fileCount++;
-        visitor.DirectoryFound += (s, e) => dirCount++;
-        
-        visitor.Finish += (s, e) => 
-        {
-            if (foundTarget)
-                Console.WriteLine("\n[Search aborted - target found]");
-            else
-                Console.WriteLine("\n[Search completed]");
+                case FileSystemEventType.Start:
+                    Console.WriteLine($"[{args.Message}]\n");
+                    break;
+                    
+                case FileSystemEventType.Finish:
+                    if (foundTarget)
+                        Console.WriteLine($"\n[Search aborted - target found]");
+                    else
+                        Console.WriteLine($"\n[{args.Message}]");
+                    break;
+                    
+                case FileSystemEventType.FileFound:
+                    fileCount++;
+                    
+                    // Handle abort condition
+                    if (abortTargetName != null && args.ItemPath != null)
+                    {
+                        string fileName = Path.GetFileName(args.ItemPath);
+                        if (fileName.Equals(abortTargetName, StringComparison.OrdinalIgnoreCase))
+                        {
+                            args.StopSearch = true;
+                            foundTarget = true;
+                            Console.WriteLine($"⛔ FOUND TARGET FILE: {args.ItemPath}");
+                            Console.WriteLine("   Aborting search...\n");
+                        }
+                    }
+                    
+                    // Handle exclusions
+                    if (extensionsToExclude != null && args.ItemPath != null)
+                    {
+                        string extension = Path.GetExtension(args.ItemPath).ToLowerInvariant();
+                        if (extensionsToExclude.Contains(extension))
+                        {
+                            args.ExcludeItem = true;
+                            excludedCount++;
+                            Console.WriteLine($"❌ EXCLUDED: {Path.GetFileName(args.ItemPath)} (extension: {extension})");
+                        }
+                    }
+                    break;
+                    
+                case FileSystemEventType.DirectoryFound:
+                    dirCount++;
+                    
+                    // Handle abort condition
+                    if (abortTargetName != null && args.ItemPath != null)
+                    {
+                        string dirName = Path.GetFileName(args.ItemPath);
+                        if (dirName.Equals(abortTargetName, StringComparison.OrdinalIgnoreCase))
+                        {
+                            args.StopSearch = true;
+                            foundTarget = true;
+                            Console.WriteLine($"⛔ FOUND TARGET DIRECTORY: {args.ItemPath}");
+                            Console.WriteLine("   Aborting search...\n");
+                        }
+                    }
+                    break;
+                    
+                case FileSystemEventType.FilteredFileFound:
+                    filteredFileCount++;
+                    break;
+                    
+                case FileSystemEventType.FilteredDirectoryFound:
+                    filteredDirCount++;
+                    break;
+            }
         };
         
         // Display results
@@ -388,7 +466,15 @@ static void ExecuteSearch(
         }
         
         // Summary
-        Console.WriteLine($"\nTotal scanned: {fileCount} files, {dirCount} directories");
+        Console.WriteLine($"\nTotal found: {fileCount} files, {dirCount} directories");
+        if ($"{directory}".Contains(".."))
+        {
+            Console.WriteLine($"[WARNING] The directory path contains relative segments (..): {directory}");
+        }
+        if (filters.Count > 0)
+        {
+            Console.WriteLine($"Passed filter: {filteredFileCount} files, {filteredDirCount} directories");
+        }
         if (excludedCount > 0)
         {
             Console.WriteLine($"Excluded: {excludedCount} files");
@@ -408,238 +494,4 @@ static void ExecuteSearch(
     {
         Console.WriteLine($"Error: {ex.Message}");
     }
-}
-
-static IFileSystemFilter? GetExtensionFilter(FilterFactory filterFactory)
-{
-    Console.WriteLine("Enter file extension(s) separated by comma (e.g., .txt, .cs, .pdf):");
-    string? input = Console.ReadLine();
-    
-    if (string.IsNullOrWhiteSpace(input))
-    {
-        Console.WriteLine("No extension provided.");
-        return null;
-    }
-    
-    var extensions = input.Split(',', StringSplitOptions.RemoveEmptyEntries)
-        .Select(e => e.Trim())
-        .ToArray();
-    
-    var filter = filterFactory.CreateExtensionFilter(extensions);
-    Console.WriteLine($"✓ Added: {filter.Description}");
-    return filter;
-}
-
-static IFileSystemFilter? GetSizeFilter(FilterFactory filterFactory)
-{
-    Console.WriteLine("1. Larger than");
-    Console.WriteLine("2. Smaller than");
-    Console.WriteLine("3. Range");
-    Console.Write("Choose size filter: ");
-    
-    string? choice = Console.ReadLine();
-    
-    IFileSystemFilter? filter = null;
-    
-    switch (choice)
-    {
-        case "1":
-            Console.Write("Enter minimum size in KB: ");
-            if (long.TryParse(Console.ReadLine(), out long minSize))
-            {
-                filter = filterFactory.CreateSizeFilter(minSize * 1024, null);
-            }
-            break;
-        case "2":
-            Console.Write("Enter maximum size in KB: ");
-            if (long.TryParse(Console.ReadLine(), out long maxSize))
-            {
-                filter = filterFactory.CreateSizeFilter(null, maxSize * 1024);
-            }
-            break;
-        case "3":
-            Console.Write("Enter minimum size in KB: ");
-            if (!long.TryParse(Console.ReadLine(), out long min))
-            {
-                Console.WriteLine("Invalid size.");
-                return null;
-            }
-            Console.Write("Enter maximum size in KB: ");
-            if (!long.TryParse(Console.ReadLine(), out long max))
-            {
-                Console.WriteLine("Invalid size.");
-                return null;
-            }
-            filter = filterFactory.CreateSizeFilter(min * 1024, max * 1024);
-            break;
-    }
-    
-    if (filter != null)
-    {
-        Console.WriteLine($"✓ Added: {filter.Description}");
-    }
-    else
-    {
-        Console.WriteLine("Invalid input.");
-    }
-    
-    return filter;
-}
-
-static IFileSystemFilter? GetCreationDateFilter(FilterFactory filterFactory)
-{
-    Console.WriteLine("1. Created in last N days");
-    Console.WriteLine("2. Created after specific date");
-    Console.WriteLine("3. Created before specific date");
-    Console.WriteLine("4. Created today");
-    Console.WriteLine("5. Created in date range");
-    Console.Write("Choose creation date filter: ");
-    
-    string? choice = Console.ReadLine();
-    
-    IFileSystemFilter? filter = null;
-    
-    switch (choice)
-    {
-        case "1":
-            Console.Write("Enter number of days: ");
-            if (int.TryParse(Console.ReadLine(), out int days))
-            {
-                filter = filterFactory.CreateCreationDateFilter(DateTime.Now.AddDays(-days), null);
-            }
-            break;
-        case "2":
-            Console.Write("Enter date (yyyy-MM-dd): ");
-            if (DateTime.TryParse(Console.ReadLine(), out DateTime afterDate))
-            {
-                filter = filterFactory.CreateCreationDateFilter(afterDate, null);
-            }
-            break;
-        case "3":
-            Console.Write("Enter date (yyyy-MM-dd): ");
-            if (DateTime.TryParse(Console.ReadLine(), out DateTime beforeDate))
-            {
-                filter = filterFactory.CreateCreationDateFilter(null, beforeDate);
-            }
-            break;
-        case "4":
-            var today = DateTime.Today;
-            filter = filterFactory.CreateCreationDateFilter(today, today.AddDays(1).AddTicks(-1));
-            break;
-        case "5":
-            Console.Write("Enter start date (yyyy-MM-dd) or press Enter to skip: ");
-            string? startInput = Console.ReadLine();
-            DateTime? startDate = null;
-            if (!string.IsNullOrWhiteSpace(startInput) && DateTime.TryParse(startInput, out DateTime parsedStart))
-            {
-                startDate = parsedStart;
-            }
-            
-            Console.Write("Enter end date (yyyy-MM-dd) or press Enter to skip: ");
-            string? endInput = Console.ReadLine();
-            DateTime? endDate = null;
-            if (!string.IsNullOrWhiteSpace(endInput) && DateTime.TryParse(endInput, out DateTime parsedEnd))
-            {
-                endDate = parsedEnd;
-            }
-            
-            if (!startDate.HasValue && !endDate.HasValue)
-            {
-                Console.WriteLine("At least one date must be provided.");
-                return null;
-            }
-            
-            filter = filterFactory.CreateCreationDateFilter(startDate, endDate);
-            break;
-    }
-    
-    if (filter != null)
-    {
-        Console.WriteLine($"✓ Added: {filter.Description}");
-    }
-    else
-    {
-        Console.WriteLine("Invalid input.");
-    }
-    
-    return filter;
-}
-
-static IFileSystemFilter? GetModificationDateFilter(FilterFactory filterFactory)
-{
-    Console.WriteLine("1. Modified in last N days");
-    Console.WriteLine("2. Modified after specific date");
-    Console.WriteLine("3. Modified before specific date");
-    Console.WriteLine("4. Modified today");
-    Console.WriteLine("5. Modified in date range");
-    Console.Write("Choose modification date filter: ");
-    
-    string? choice = Console.ReadLine();
-    
-    IFileSystemFilter? filter = null;
-    
-    switch (choice)
-    {
-        case "1":
-            Console.Write("Enter number of days: ");
-            if (int.TryParse(Console.ReadLine(), out int days))
-            {
-                filter = filterFactory.CreateModificationDateFilter(DateTime.Now.AddDays(-days), null);
-            }
-            break;
-        case "2":
-            Console.Write("Enter date (yyyy-MM-dd): ");
-            if (DateTime.TryParse(Console.ReadLine(), out DateTime afterDate))
-            {
-                filter = filterFactory.CreateModificationDateFilter(afterDate, null);
-            }
-            break;
-        case "3":
-            Console.Write("Enter date (yyyy-MM-dd): ");
-            if (DateTime.TryParse(Console.ReadLine(), out DateTime beforeDate))
-            {
-                filter = filterFactory.CreateModificationDateFilter(null, beforeDate);
-            }
-            break;
-        case "4":
-            var today = DateTime.Today;
-            filter = filterFactory.CreateModificationDateFilter(today, today.AddDays(1).AddTicks(-1));
-            break;
-        case "5":
-            Console.Write("Enter start date (yyyy-MM-dd) or press Enter to skip: ");
-            string? startInput = Console.ReadLine();
-            DateTime? startDate = null;
-            if (!string.IsNullOrWhiteSpace(startInput) && DateTime.TryParse(startInput, out DateTime parsedStart))
-            {
-                startDate = parsedStart;
-            }
-            
-            Console.Write("Enter end date (yyyy-MM-dd) or press Enter to skip: ");
-            string? endInput = Console.ReadLine();
-            DateTime? endDate = null;
-            if (!string.IsNullOrWhiteSpace(endInput) && DateTime.TryParse(endInput, out DateTime parsedEnd))
-            {
-                endDate = parsedEnd;
-            }
-            
-            if (!startDate.HasValue && !endDate.HasValue)
-            {
-                Console.WriteLine("At least one date must be provided.");
-                return null;
-            }
-            
-            filter = filterFactory.CreateModificationDateFilter(startDate, endDate);
-            break;
-    }
-    
-    if (filter != null)
-    {
-        Console.WriteLine($"✓ Added: {filter.Description}");
-    }
-    else
-    {
-        Console.WriteLine("Invalid input.");
-    }
-    
-    return filter;
 }

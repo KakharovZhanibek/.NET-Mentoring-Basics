@@ -1,3 +1,5 @@
+using FileSystemVisitorConsoleApp.Events;
+
 namespace FileSystemVisitorConsoleApp.Interfaces;
 
 /// <summary>
@@ -11,11 +13,8 @@ public interface IFileSystemVisitor
     /// <returns>An enumerable collection of file system item paths.</returns>
     IEnumerable<string> GetFileSystemItems();
     
-    // Events
-    event EventHandler? Start;
-    event EventHandler? Finish;
-    event EventHandler<ItemEventArgs>? FileFound;
-    event EventHandler<ItemEventArgs>? DirectoryFound;
-    event EventHandler<ItemEventArgs>? FilteredFileFound;
-    event EventHandler<ItemEventArgs>? FilteredDirectoryFound;
+    /// <summary>
+    /// Event raised during file system traversal with information about what happened.
+    /// </summary>
+    event EventHandler<FileSystemVisitorEventArgs>? ItemProcessed;
 }
