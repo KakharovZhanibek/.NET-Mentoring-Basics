@@ -157,17 +157,18 @@ static void ApplyMultipleFilters(string directory)
 {
     Console.WriteLine("═══ Apply Filters and Event Handlers ═══\n");
     
-    var filters = new List<IFileSystemFilter>();
+    var selectedFilters = new List<IFileSystemFilter>();
     string? abortTargetName = null;
     HashSet<string>? extensionsToExclude = null;
     bool addingFilters = true;
     
+    // Discover available filters once
+    var availableFilters = FilterDiscovery.DiscoverFilters();
+    
     while (addingFilters)
     {
-        // Dynamically render filter options from registry
+        // Display filter options
         Console.WriteLine("\nAvailable filters:");
-        var availableFilters = FilterRegistry.AvailableFilters;
-        
         for (int i = 0; i < availableFilters.Length; i++)
         {
             Console.WriteLine($"{i + 1}. {availableFilters[i].Name} - {availableFilters[i].Description}");
@@ -190,12 +191,16 @@ static void ApplyMultipleFilters(string directory)
         // Handle filter selection
         if (int.TryParse(choice, out int filterIndex) && filterIndex >= 1 && filterIndex <= availableFilters.Length)
         {
-            var selectedFilter = availableFilters[filterIndex - 1];
-            var filter = CreateFilterFromMetadata(selectedFilter);
+            var metadata = availableFilters[filterIndex - 1];
+            
+            Console.WriteLine($"\nConfiguring: {metadata.Name}");
+            
+            // Each filter handles its own user input via CreateFilter (which calls CreateFromUserInput)
+            var filter = metadata.CreateFilter([]);
             
             if (filter != null)
             {
-                filters.Add(filter);
+                selectedFilters.Add(filter);
                 Console.WriteLine($"✓ Added: {filter.Description}");
             }
         }
@@ -216,7 +221,7 @@ static void ApplyMultipleFilters(string directory)
         if (addingFilters && choice != "0")
         {
             Console.WriteLine($"\nCurrent settings:");
-            Console.WriteLine($"  - Filters: {filters.Count}");
+            Console.WriteLine($"  - Filters: {selectedFilters.Count}");
             Console.WriteLine($"  - Abort condition: {(abortTargetName != null ? $"Stop when '{abortTargetName}' found" : "None")}");
             Console.WriteLine($"  - Exclusions: {(extensionsToExclude != null ? string.Join(", ", extensionsToExclude) : "None")}");
             Console.Write("\nAdd another option? (y/n): ");
@@ -229,51 +234,7 @@ static void ApplyMultipleFilters(string directory)
     }
     
     // Execute search with configured options
-    ExecuteSearch(directory, filters, abortTargetName, extensionsToExclude);
-}
-
-/// <summary>
-/// Creates a filter from metadata by collecting parameters from user.
-/// </summary>
-static IFileSystemFilter? CreateFilterFromMetadata(FilterMetadata metadata)
-{
-    try
-    {
-        Console.WriteLine($"\nConfiguring: {metadata.Name}");
-        
-        // If no parameters required, create immediately
-        if (metadata.Parameters.Length == 0)
-        {
-            return metadata.CreateFilter([]);
-        }
-        
-        // Collect parameter values
-        var parameterValues = new object?[metadata.Parameters.Length];
-        
-        for (int i = 0; i < metadata.Parameters.Length; i++)
-        {
-            var param = metadata.Parameters[i];
-            parameterValues[i] = ParameterInputService.GetParameterValue(
-                param.ParameterType,
-                param.Prompt,
-                param.IsRequired);
-        }
-        
-        // Validate that at least one parameter is provided for optional filters
-        if (metadata.Parameters.All(p => !p.IsRequired) && parameterValues.All(v => v == null))
-        {
-            Console.WriteLine("At least one parameter must be provided.");
-            return null;
-        }
-        
-        // Create the filter
-        return metadata.CreateFilter(parameterValues);
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"Error creating filter: {ex.Message}");
-        return null;
-    }
+    ExecuteSearch(directory, selectedFilters, abortTargetName, extensionsToExclude);
 }
 
 /// <summary>
@@ -325,11 +286,11 @@ static HashSet<string>? GetExtensionsToExclude()
 /// </summary>
 static void ExecuteSearch(
     string directory, 
-    List<IFileSystemFilter> filters, 
+    List<IFileSystemFilter> selectedFilters, 
     string? abortTargetName, 
     HashSet<string>? extensionsToExclude)
 {
-    if (filters.Count == 0 && abortTargetName == null && extensionsToExclude == null)
+    if (selectedFilters.Count == 0 && abortTargetName == null && extensionsToExclude == null)
     {
         Console.WriteLine("\nNo filters or event handlers configured. Showing all items.");
         ShowAllItems(directory);
@@ -338,11 +299,18 @@ static void ExecuteSearch(
     
     Console.WriteLine($"\n═══ Starting Search ═══\n");
     
-    if (filters.Count > 0)
+    // Build combined filter using LINQ Aggregate
+    IFileSystemFilter? combinedFilter = null;
+    if (selectedFilters.Count > 0)
     {
-        var combinedFilter = new AndFilter(filters);
+        // Use Aggregate to combine all filters into an AndFilter
+        combinedFilter = selectedFilters.Count == 1
+            ? selectedFilters[0]
+            : new AndFilter(selectedFilters);
+        
         Console.WriteLine($"Filters: {combinedFilter.Description}");
     }
+    
     if (abortTargetName != null)
     {
         Console.WriteLine($"Abort: Will stop when '{abortTargetName}' is found");
@@ -355,17 +323,10 @@ static void ExecuteSearch(
     
     try
     {
-        // Create visitor with filter if any
-        FileSystemVisitor visitor;
-        if (filters.Count > 0)
-        {
-            var combinedFilter = new AndFilter(filters);
-            visitor = new FileSystemVisitor(directory, combinedFilter.IsMatch);
-        }
-        else
-        {
-            visitor = new FileSystemVisitor(directory);
-        }
+        // Create visitor with combined filter if any
+        FileSystemVisitor visitor = combinedFilter != null
+            ? new FileSystemVisitor(directory, combinedFilter.IsMatch)
+            : new FileSystemVisitor(directory);
         
         // Track statistics
         int fileCount = 0;
@@ -471,7 +432,7 @@ static void ExecuteSearch(
         {
             Console.WriteLine($"[WARNING] The directory path contains relative segments (..): {directory}");
         }
-        if (filters.Count > 0)
+        if (selectedFilters.Count > 0)
         {
             Console.WriteLine($"Passed filter: {filteredFileCount} files, {filteredDirCount} directories");
         }

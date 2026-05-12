@@ -50,22 +50,11 @@ public static class ParameterInputService
                 .Select(s => s.Trim())
                 .ToArray(),
 
-            // Long
             Type t when t == typeof(long) => long.Parse(input),
-
-            // DateTime
             Type t when t == typeof(DateTime) => DateTime.Parse(input),
-
-            // Int
             Type t when t == typeof(int) => int.Parse(input),
-
-            // Double
             Type t when t == typeof(double) => double.Parse(input),
-
-            // Bool
             Type t when t == typeof(bool) => bool.Parse(input),
-
-            // String
             Type t when t == typeof(string) => input,
 
             _ => throw new NotSupportedException($"Type {targetType.Name} is not supported for parameter conversion.")

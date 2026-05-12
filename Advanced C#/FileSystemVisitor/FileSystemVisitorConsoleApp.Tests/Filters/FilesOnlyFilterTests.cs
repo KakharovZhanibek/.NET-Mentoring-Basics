@@ -53,6 +53,6 @@ public class FilesOnlyFilterTests : IDisposable
         var filter = new FilesOnlyFilter();
         
         // Act & Assert
-        filter.Description.Should().Be("Files only");
+        filter.Description.Should().Be("Type: Files only");
     }
 }

@@ -53,6 +53,6 @@ public class DirectoriesOnlyFilterTests : IDisposable
         var filter = new DirectoriesOnlyFilter();
         
         // Act & Assert
-        filter.Description.Should().Be("Directories only");
+        filter.Description.Should().Be("Type: Directories only");
     }
 }
