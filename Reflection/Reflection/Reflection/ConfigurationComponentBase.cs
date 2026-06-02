@@ -71,7 +71,7 @@ public abstract class ConfigurationComponentBase
     {
         var properties = GetType()
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)
-            .Where(p => p.CanWrite && p.GetCustomAttribute<ConfigurationItemAttribute>() != null);
+            .Where(p => p.CanWrite && p.IsDefined(typeof(ConfigurationItemAttribute)));
 
         foreach (var property in properties)
         {
@@ -113,7 +113,7 @@ public abstract class ConfigurationComponentBase
     {
         var properties = GetType()
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)
-            .Where(p => p.CanRead && p.GetCustomAttribute<ConfigurationItemAttribute>() != null);
+            .Where(p => p.CanRead && p.IsDefined(typeof(ConfigurationItemAttribute)));
 
         foreach (var property in properties)
         {
