@@ -18,5 +18,15 @@ namespace UnitTesting.Tests
 
             Assert.Equal("0", result);
         }
+
+        [Fact]
+        public void TwoSmallNaturalNumbers_ReturnsTheirSum()
+        {
+            var utility = new UnitTesting.Models.StringSumUtility();
+
+            var result = utility.Sum("1", "2");
+
+            Assert.Equal("3", result);
+        }
     }
 }
