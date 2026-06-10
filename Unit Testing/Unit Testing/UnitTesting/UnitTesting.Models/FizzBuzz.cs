@@ -17,5 +17,11 @@ namespace UnitTesting.Models
 
             return result.Length > 0 ? result : number.ToString();
         }
+
+        public IEnumerable<string> Generate()
+        {
+            for (int i = 1; i <= 100; i++)
+                yield return GetResult(i);
+        }
     }
 }
