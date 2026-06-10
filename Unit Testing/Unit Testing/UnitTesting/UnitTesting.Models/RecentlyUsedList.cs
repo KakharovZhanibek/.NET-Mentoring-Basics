@@ -3,6 +3,12 @@ namespace UnitTesting.Models
     public class RecentlyUsedList
     {
         private readonly List<string> _items = new();
+        private readonly int? _capacity;
+
+        public RecentlyUsedList(int? capacity = 5)
+        {
+            _capacity = capacity;
+        }
 
         public int Count => _items.Count;
 
@@ -15,6 +21,9 @@ namespace UnitTesting.Models
 
             _items.Remove(item);
             _items.Insert(0, item);
+
+            if (_capacity.HasValue && _items.Count > _capacity.Value)
+                _items.RemoveAt(_items.Count - 1);
         }
     }
 }
