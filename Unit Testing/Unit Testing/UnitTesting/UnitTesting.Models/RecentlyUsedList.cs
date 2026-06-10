@@ -12,7 +12,17 @@ namespace UnitTesting.Models
 
         public int Count => _items.Count;
 
-        public string this[int index] => _items[index];
+        public string this[int index]
+        {
+            get
+            {
+                if (index < 0 || index >= _items.Count)
+                    throw new ArgumentOutOfRangeException(nameof(index),
+                        $"Index must be between 0 and {_items.Count - 1}.");
+
+                return _items[index];
+            }
+        }
 
         public void Add(string item)
         {
