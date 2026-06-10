@@ -49,5 +49,21 @@ namespace UnitTesting.Tests
 
             Assert.Equal("FizzBuzz", result);
         }
+
+        [Fact]
+        public void Generate_Returns100Results()
+        {
+            var fizzBuzz = new UnitTesting.Models.FizzBuzz();
+
+            var results = fizzBuzz.Generate().ToList();
+
+            Assert.Equal(100,       results.Count);
+            Assert.Equal("1",       results[0]);
+            Assert.Equal("2",       results[1]);
+            Assert.Equal("Fizz",    results[2]);
+            Assert.Equal("Buzz",    results[4]);
+            Assert.Equal("FizzBuzz",results[14]);
+            Assert.Equal("Buzz",    results[99]);
+        }
     }
 }
