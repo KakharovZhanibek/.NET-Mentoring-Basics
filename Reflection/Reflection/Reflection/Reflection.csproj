@@ -14,6 +14,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Reflection.Contracts\Reflection.Contracts.csproj" />
+    <!-- Source generator: loaded by Roslyn at compile time, not linked into the output -->
+    <ProjectReference Include="..\Reflection.SourceGenerator\Reflection.SourceGenerator.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
     <!-- Reference plugin projects to ensure they build first -->
     <ProjectReference Include="..\Reflection.Plugins.FileProvider\Reflection.Plugins.FileProvider.csproj" Private="false" />
     <ProjectReference Include="..\Reflection.Plugins.ConfigurationManagerProvider\Reflection.Plugins.ConfigurationManagerProvider.csproj" Private="false" />

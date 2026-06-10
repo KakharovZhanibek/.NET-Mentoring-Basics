@@ -1,9 +1,11 @@
 namespace Reflection;
 
 /// <summary>
-/// Sample component demonstrating the use of ConfigurationItemAttribute
+/// Sample component demonstrating the use of ConfigurationItemAttribute.
+/// LoadSettings() and SaveSettings() are generated at compile time by
+/// Reflection.SourceGenerator — no System.Reflection used at runtime.
 /// </summary>
-public class AppSettings : ConfigurationComponentBase
+public partial class AppSettings : ConfigurationComponentBase
 {
     [ConfigurationItem("MaxRetryCount", ConfigurationProviderType.File)]
     public int MaxRetryCount { get; set; }
