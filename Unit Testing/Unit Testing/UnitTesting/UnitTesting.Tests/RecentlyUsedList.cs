@@ -19,5 +19,15 @@
 
             Assert.Equal(1, list.Count);
         }
+
+        [Fact]
+        public void MostRecentlyAddedItem_IsAtIndexZero()
+        {
+            var list = new UnitTesting.Models.RecentlyUsedList();
+
+            list.Add("alpha");
+
+            Assert.Equal("alpha", list[0]);
+        }
     }
 }
