@@ -73,5 +73,52 @@
 
             Assert.Throws<ArgumentException>(() => list.Add(string.Empty));
         }
+
+        [Fact]
+        public void DefaultCapacityIsFive_OldestItemDroppedOnOverflow()
+        {
+            var list = new UnitTesting.Models.RecentlyUsedList();
+
+            list.Add("one");
+            list.Add("two");
+            list.Add("three");
+            list.Add("four");
+            list.Add("five");
+            list.Add("six");
+
+            Assert.Equal(5,     list.Count);
+            Assert.Equal("six", list[0]);
+            Assert.Equal("two", list[3]);
+            Assert.Equal("one", list[4]);
+        }
+
+        [Fact]
+        public void CustomBoundedCapacity_DropsOldestItemOnOverflow()
+        {
+            var list = new UnitTesting.Models.RecentlyUsedList(capacity: 3);
+
+            list.Add("one");
+            list.Add("two");
+            list.Add("three");
+            list.Add("four");
+
+            Assert.Equal(3,       list.Count);
+            Assert.Equal("four",  list[0]);
+            Assert.Equal("three", list[1]);
+            Assert.Equal("two",   list[2]);
+        }
+
+        [Fact]
+        public void UnboundedList_NeverDropsItems()
+        {
+            var list = new UnitTesting.Models.RecentlyUsedList(capacity: null);
+
+            for (int i = 1; i <= 20; i++)
+                list.Add($"item{i}");
+
+            Assert.Equal(20,        list.Count);
+            Assert.Equal("item20",  list[0]);
+            Assert.Equal("item1",   list[19]);
+        }
     }
 }
