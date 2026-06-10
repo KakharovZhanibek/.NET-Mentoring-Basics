@@ -38,5 +38,15 @@ namespace UnitTesting.Tests
 
             Assert.Equal("5", result);
         }
+
+        [Fact]
+        public void NonNumericString_IsTreatedAsZero()
+        {
+            var utility = new UnitTesting.Models.StringSumUtility();
+
+            var result = utility.Sum("abc", "3");
+
+            Assert.Equal("3", result);
+        }
     }
 }
