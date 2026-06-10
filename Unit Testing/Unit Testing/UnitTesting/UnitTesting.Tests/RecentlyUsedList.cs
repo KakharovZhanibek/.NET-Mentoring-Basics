@@ -57,5 +57,21 @@
             Assert.Equal("alpha", list[0]);
             Assert.Equal("beta",  list[1]);
         }
+
+        [Fact]
+        public void AddingNullItem_ThrowsArgumentException()
+        {
+            var list = new UnitTesting.Models.RecentlyUsedList();
+
+            Assert.Throws<ArgumentException>(() => list.Add(null!));
+        }
+
+        [Fact]
+        public void AddingEmptyStringItem_ThrowsArgumentException()
+        {
+            var list = new UnitTesting.Models.RecentlyUsedList();
+
+            Assert.Throws<ArgumentException>(() => list.Add(string.Empty));
+        }
     }
 }
