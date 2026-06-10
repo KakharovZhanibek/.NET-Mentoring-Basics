@@ -10,7 +10,10 @@ namespace UnitTesting.Models
     {
         public string Sum(string num1, string num2)
         {
-            return "0";
+            int n1 = int.TryParse(num1, out int v1) && v1 >= 0 ? v1 : 0;
+            int n2 = int.TryParse(num2, out int v2) && v2 >= 0 ? v2 : 0;
+
+            return (n1 + n2).ToString();
         }
     }
 }
