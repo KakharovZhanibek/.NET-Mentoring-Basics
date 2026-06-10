@@ -48,5 +48,15 @@ namespace UnitTesting.Tests
 
             Assert.Equal("3", result);
         }
+
+        [Fact]
+        public void DecimalString_IsTreatedAsZero()
+        {
+            var utility = new UnitTesting.Models.StringSumUtility();
+
+            var result = utility.Sum("1.5", "2");
+
+            Assert.Equal("2", result);
+        }
     }
 }
