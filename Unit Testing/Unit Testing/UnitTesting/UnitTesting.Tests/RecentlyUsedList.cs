@@ -120,5 +120,23 @@
             Assert.Equal("item20",  list[0]);
             Assert.Equal("item1",   list[19]);
         }
+
+        [Fact]
+        public void AccessingNegativeIndex_ThrowsArgumentOutOfRangeException()
+        {
+            var list = new UnitTesting.Models.RecentlyUsedList();
+            list.Add("alpha");
+
+            Assert.Throws<ArgumentOutOfRangeException>(() => _ = list[-1]);
+        }
+
+        [Fact]
+        public void AccessingIndexEqualToCount_ThrowsArgumentOutOfRangeException()
+        {
+            var list = new UnitTesting.Models.RecentlyUsedList();
+            list.Add("alpha");
+
+            Assert.Throws<ArgumentOutOfRangeException>(() => _ = list[1]);
+        }
     }
 }
