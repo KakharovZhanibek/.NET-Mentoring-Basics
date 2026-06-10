@@ -39,10 +39,23 @@
             list.Add("beta");
             list.Add("gamma");
 
-
             Assert.Equal("gamma", list[0]);
             Assert.Equal("beta",  list[1]);
             Assert.Equal("alpha", list[2]);
+        }
+
+        [Fact]
+        public void AddingDuplicateItem_MovesItToFront()
+        {
+            var list = new UnitTesting.Models.RecentlyUsedList();
+
+            list.Add("alpha");
+            list.Add("beta");
+            list.Add("alpha");
+
+            Assert.Equal(2,       list.Count);
+            Assert.Equal("alpha", list[0]);
+            Assert.Equal("beta",  list[1]);
         }
     }
 }
