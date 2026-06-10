@@ -88,8 +88,8 @@
 
             Assert.Equal(5,     list.Count);
             Assert.Equal("six", list[0]);
-            Assert.Equal("two", list[3]);
-            Assert.Equal("one", list[4]);
+            Assert.Equal("three", list[3]);
+            Assert.Equal("two", list[4]);
         }
 
         [Fact]
