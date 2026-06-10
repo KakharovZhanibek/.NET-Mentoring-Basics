@@ -13,11 +13,21 @@ namespace UnitTesting.Tests
         [Fact]
         public void PlainNumber_ReturnsNumberAsString()
         {
-            var fizzBuzz = new FizzBuzz();
+            var fizzBuzz = new UnitTesting.Models.FizzBuzz();
 
             var result = fizzBuzz.GetResult(1);
 
             Assert.Equal("1", result);
+        }
+
+        [Fact]
+        public void MultipleOfThree_ReturnsFizz()
+        {
+            var fizzBuzz = new UnitTesting.Models.FizzBuzz();
+
+            var result = fizzBuzz.GetResult(3);
+
+            Assert.Equal("Fizz", result);
         }
     }
 }
