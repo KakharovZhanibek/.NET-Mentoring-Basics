@@ -8,5 +8,9 @@ namespace UnitTesting.Models
 {
     public class FizzBuzz
     {
+        public string GetResult(int number)
+        {
+            return number.ToString();
+        }
     }
 }
