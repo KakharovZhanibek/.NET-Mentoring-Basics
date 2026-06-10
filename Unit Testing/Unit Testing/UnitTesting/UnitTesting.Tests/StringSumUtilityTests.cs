@@ -28,5 +28,15 @@ namespace UnitTesting.Tests
 
             Assert.Equal("3", result);
         }
+
+        [Fact]
+        public void NegativeNumber_IsTreatedAsZero()
+        {
+            var utility = new UnitTesting.Models.StringSumUtility();
+
+            var result = utility.Sum("-3", "5");
+
+            Assert.Equal("5", result);
+        }
     }
 }
