@@ -10,6 +10,9 @@ namespace UnitTesting.Models
 
         public void Add(string item)
         {
+            if (string.IsNullOrEmpty(item))
+                throw new ArgumentException("Item must not be null or empty.", nameof(item));
+
             _items.Remove(item);
             _items.Insert(0, item);
         }
