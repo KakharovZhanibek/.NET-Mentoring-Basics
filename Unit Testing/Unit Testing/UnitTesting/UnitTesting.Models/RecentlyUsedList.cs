@@ -31,7 +31,11 @@ namespace UnitTesting.Models
 
             _items.Remove(item);
             _items.Insert(0, item);
+            TrimToCapacity();
+        }
 
+        private void TrimToCapacity()
+        {
             if (_capacity.HasValue && _items.Count > _capacity.Value)
                 _items.RemoveAt(_items.Count - 1);
         }
