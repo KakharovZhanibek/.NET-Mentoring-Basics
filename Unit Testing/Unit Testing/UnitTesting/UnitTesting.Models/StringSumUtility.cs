@@ -8,5 +8,9 @@ namespace UnitTesting.Models
 {
     public class StringSumUtility
     {
+        public string Sum(string num1, string num2)
+        {
+            return "0";
+        }
     }
 }
