@@ -10,6 +10,7 @@ namespace UnitTesting.Models
 
         public void Add(string item)
         {
+            _items.Remove(item);
             _items.Insert(0, item);
         }
     }
