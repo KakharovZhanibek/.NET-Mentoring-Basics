@@ -39,5 +39,15 @@ namespace UnitTesting.Tests
 
             Assert.Equal("Buzz", result);
         }
+
+        [Fact]
+        public void MultipleOfThreeAndFive_ReturnsFizzBuzz()
+        {
+            var fizzBuzz = new UnitTesting.Models.FizzBuzz();
+
+            var result = fizzBuzz.GetResult(15);
+
+            Assert.Equal("FizzBuzz", result);
+        }
     }
 }
