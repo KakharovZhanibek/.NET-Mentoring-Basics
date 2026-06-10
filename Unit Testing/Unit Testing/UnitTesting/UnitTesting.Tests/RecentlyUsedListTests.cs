@@ -1,6 +1,6 @@
 ﻿namespace UnitTesting.Tests
 {
-    public class RecentlyUsedList
+    public class RecentlyUsedListTests
     {
         [Fact]
         public void NewList_HasCountOfZero()
