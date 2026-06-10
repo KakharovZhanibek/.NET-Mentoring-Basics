@@ -9,5 +9,15 @@
 
             Assert.Equal(0, list.Count);
         }
+
+        [Fact]
+        public void AddingOneItem_IncreasesCountToOne()
+        {
+            var list = new UnitTesting.Models.RecentlyUsedList();
+
+            list.Add("alpha");
+
+            Assert.Equal(1, list.Count);
+        }
     }
 }
