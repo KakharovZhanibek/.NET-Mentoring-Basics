@@ -58,5 +58,15 @@ namespace UnitTesting.Tests
 
             Assert.Equal("2", result);
         }
+
+        [Fact]
+        public void TwoLargeNaturalNumbers_ReturnsTheirSum()
+        {
+            var utility = new UnitTesting.Models.StringSumUtility();
+
+            var result = utility.Sum("100", "200");
+
+            Assert.Equal("300", result);
+        }
     }
 }
