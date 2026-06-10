@@ -10,11 +10,12 @@ namespace UnitTesting.Models
     {
         public string GetResult(int number)
         {
-            if (number % 3 == 0 && number % 5 == 0) return "FizzBuzz";
-            if (number % 3 == 0) return "Fizz";
-            if (number % 5 == 0) return "Buzz";
+            var result = string.Empty;
 
-            return number.ToString();
+            if (number % 3 == 0) result += "Fizz";
+            if (number % 5 == 0) result += "Buzz";
+
+            return result.Length > 0 ? result : number.ToString();
         }
     }
 }
