@@ -20,8 +20,7 @@ namespace UnitTesting.Models
 
         public IEnumerable<string> Generate()
         {
-            for (int i = 1; i <= 100; i++)
-                yield return GetResult(i);
+            return Enumerable.Range(1, 100).Select(GetResult);
         }
     }
 }
