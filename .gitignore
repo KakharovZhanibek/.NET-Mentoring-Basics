@@ -133,3 +133,13 @@ $RECYCLE.BIN/
 *.lnk
 
 **/packages/
+
+# =====================================================================
+# SQL Server Data Tools (SSDT)
+# =====================================================================
+
+# Runtime lock / journal file - machine-specific, never commit
+*.jfm
+
+# Local schema model cache - auto-regenerated on build
+*.dbmdl
