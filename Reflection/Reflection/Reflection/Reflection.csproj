@@ -1,0 +1,49 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.8" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Reflection.Contracts\Reflection.Contracts.csproj" />
+    <!-- Source generator: loaded by Roslyn at compile time, not linked into the output -->
+    <ProjectReference Include="..\Reflection.SourceGenerator\Reflection.SourceGenerator.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+    <!-- Reference plugin projects to ensure they build first -->
+    <ProjectReference Include="..\Reflection.Plugins.FileProvider\Reflection.Plugins.FileProvider.csproj" Private="false" />
+    <ProjectReference Include="..\Reflection.Plugins.ConfigurationManagerProvider\Reflection.Plugins.ConfigurationManagerProvider.csproj" Private="false" />
+  </ItemGroup>
+
+  <!-- Copy plugin assemblies to plugins folder after build -->
+  <Target Name="CopyPlugins" AfterTargets="Build">
+    <MakeDir Directories="$(OutputPath)plugins" />
+    
+    <!-- Copy FileProvider plugin -->
+    <ItemGroup>
+      <FileProviderFiles Include="..\Reflection.Plugins.FileProvider\bin\$(Configuration)\$(TargetFramework)\Reflection.Plugins.FileProvider.dll" />
+      <FileProviderFiles Include="..\Reflection.Plugins.FileProvider\bin\$(Configuration)\$(TargetFramework)\Reflection.Contracts.dll" />
+    </ItemGroup>
+    <Copy SourceFiles="@(FileProviderFiles)" DestinationFolder="$(OutputPath)plugins" SkipUnchangedFiles="true" />
+    
+    <!-- Copy ConfigurationManagerProvider plugin -->
+    <ItemGroup>
+      <ConfigManagerFiles Include="..\Reflection.Plugins.ConfigurationManagerProvider\bin\$(Configuration)\$(TargetFramework)\Reflection.Plugins.ConfigurationManagerProvider.dll" />
+      <ConfigManagerFiles Include="..\Reflection.Plugins.ConfigurationManagerProvider\bin\$(Configuration)\$(TargetFramework)\Microsoft.Extensions.*.dll" />
+      <ConfigManagerFiles Include="..\Reflection.Plugins.ConfigurationManagerProvider\bin\$(Configuration)\$(TargetFramework)\System.Text.*.dll" />
+      <ConfigManagerFiles Include="..\Reflection.Plugins.ConfigurationManagerProvider\bin\$(Configuration)\$(TargetFramework)\System.IO.*.dll" />
+    </ItemGroup>
+    <Copy SourceFiles="@(ConfigManagerFiles)" DestinationFolder="$(OutputPath)plugins" SkipUnchangedFiles="true" />
+    
+    <Message Importance="high" Text="Copied plugin assemblies to $(OutputPath)plugins" />
+  </Target>
+
+</Project>
