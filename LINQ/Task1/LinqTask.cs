@@ -19,13 +19,12 @@ namespace Task1
         )
         {
             if (customers == null) throw new ArgumentNullException(nameof(customers));
-            return customers.Select(c => (
-                c,
-                suppliers?.Where(s =>
-                    string.Equals(s.Country, c.Country, StringComparison.OrdinalIgnoreCase) &&
-                    string.Equals(s.City, c.City, StringComparison.OrdinalIgnoreCase)
-                ) ?? Enumerable.Empty<Supplier>()
-            ));
+            return from c in customers
+                   join s in suppliers ?? Enumerable.Empty<Supplier>()
+                       on new { Country = c.Country?.ToLower(), City = c.City?.ToLower() }
+                       equals new { Country = s.Country?.ToLower(), City = s.City?.ToLower() }
+                       into matchedSuppliers
+                   select (c, (IEnumerable<Supplier>)matchedSuppliers);
         }
 
         public static IEnumerable<(Customer customer, IEnumerable<Supplier> suppliers)> Linq2UsingGroup(
@@ -34,16 +33,17 @@ namespace Task1
         )
         {
             if (customers == null) throw new ArgumentNullException(nameof(customers));
-            var supplierGroups = (suppliers ?? Enumerable.Empty<Supplier>())
-                .GroupBy(s => (s.Country.ToLower(), s.City.ToLower()))
-                .ToDictionary(g => g.Key, g => (IEnumerable<Supplier>)g.ToList());
 
-            return customers.Select(c =>
-            {
-                var key = (c.Country?.ToLower() ?? "", c.City?.ToLower() ?? "");
-                var matched = supplierGroups.TryGetValue(key, out var s) ? s : Enumerable.Empty<Supplier>();
-                return (c, matched);
-            });
+            var supplierGroups =
+                from s in suppliers ?? Enumerable.Empty<Supplier>()
+                group s by new { Country = s.Country.ToLower(), City = s.City.ToLower() } into sg
+                select sg;
+
+            return from c in customers
+                   join sg in supplierGroups
+                       on new { Country = c.Country?.ToLower(), City = c.City?.ToLower() }
+                       equals sg.Key into matchedGroups
+                   select (c, (IEnumerable<Supplier>)matchedGroups.SelectMany(g => g));
         }
 
         public static IEnumerable<Customer> Linq3(IEnumerable<Customer> customers, decimal limit)
